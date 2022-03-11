@@ -1,0 +1,92 @@
+app: golden-hour-bot
+service: golden-hour-bot
+
+provider:
+  name: aws
+  runtime: go1.x
+  stage: prod
+  environment:
+    SQS_QUEUE_URL: https://sqs.us-east-1.amazonaws.com/239730373154/golden-alerts
+    TELEGRAM_TOKEN: ${self:custom.conf.telegramToken}
+    GEONAMES_USERNAME: ${self:custom.conf.geonamesUsername}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:BatchGetItem
+            - dynamodb:BatchWriteItem
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:Scan
+            - dynamodb:Query
+          Resource: 
+            - arn:aws:dynamodb:us-east-1:239730373154:table/golden-*
+        - Effect: Allow
+          Action:
+            - sqs:ReceiveMessage
+            - sqs:SendMessage
+          Resource:
+            - arn:aws:sqs:us-east-1:239730373154:golden-*
+          
+
+resources:
+  Resources:
+    RemindersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        ${file(./res/remindersTable.yml)}
+    RemindersIndexTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        ${file(./res/remindersIndexTable.yml)}
+    StateTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        ${file(./res/stateTable.yml)}
+    AlertQueue:
+      Type: AWS::SQS::Queue
+      Properties: 
+        QueueName: golden-alerts
+
+functions:
+  webhook:
+    handler: bin/aws-webhook
+    timeout: 30
+    package:
+      include:
+        - ./bin/aws-webhook
+    events:
+      - http: ANY /
+      - http: 'ANY /{proxy+}'
+  alertQueuer:
+    handler: bin/aws-alert-queuer
+    timeout: 60
+    package:
+      include:
+        - ./bin/aws-alert-queuer
+    events:
+      - eventBridge:
+          schedule: rate(60 minutes)
+  alertDequeuer:
+    handler: bin/aws-alert-dequeuer
+    timeout: 30
+    package:
+      include:
+        - ./bin/aws-alert-dequeuer
+    events:
+      - sqs: 
+          arn: arn:aws:sqs:us-east-1:239730373154:golden-alerts
+          batchSize: 1
+
+package:
+  include:
+    - bin/**
+  exclude:
+    - server/**
+    - frontend/**
+    - .git/**
+  excludeDevDependencies: false
+
+custom:
+  conf: ${file(config.yml)}

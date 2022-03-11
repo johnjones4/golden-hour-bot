@@ -1,0 +1,15 @@
+TableName: golden-reminders
+BillingMode: PROVISIONED
+ProvisionedThroughput:
+  ReadCapacityUnits: 5
+  WriteCapacityUnits: 5
+AttributeDefinitions:
+  - AttributeName: region
+    AttributeType: S
+  - AttributeName: chatId
+    AttributeType: N
+KeySchema:
+  - AttributeName: region
+    KeyType: HASH
+  - AttributeName: chatId
+    KeyType: RANGE

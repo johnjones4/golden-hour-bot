@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  dynamodb:
+    image: amazon/dynamodb-local
+    ports:
+      - 8000:8000
+    volumes:
+      - dynamodb:/home/dynamodblocal
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin
+    ports:
+      - 8001:8001
+    environment: 
+      - DYNAMO_ENDPOINT=http://dynamodb:8000
+      - AWS_SECRET_ACCESS_KEY=dev
+      - AWS_ACCESS_KEY_ID=dev
+      - AWS_DEFAULT_REGION=us-east-1
+  queue:
+    image: s12v/elasticmq
+    volumes:
+      - ./queue.conf:/etc/elasticmq/elasticmq.conf
+    ports:
+      - "9324:9324"
+
+volumes:
+  dynamodb:

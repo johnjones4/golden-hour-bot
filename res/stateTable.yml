@@ -1,0 +1,11 @@
+TableName: golden-state
+BillingMode: PROVISIONED
+ProvisionedThroughput:
+  ReadCapacityUnits: 5
+  WriteCapacityUnits: 5
+AttributeDefinitions:
+  - AttributeName: chatId
+    AttributeType: N
+KeySchema:
+  - AttributeName: chatId
+    KeyType: HASH
