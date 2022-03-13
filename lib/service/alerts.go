@@ -61,13 +61,18 @@ func RunAlertCycle(rs shared.ReminderStorage, aq shared.AlertQueue) error {
 }
 
 func SendAlert(client telegram.Telegram, predType string, reminder shared.Reminder) error {
+	loc, err := time.LoadLocation(reminder.Timezone)
+	if err != nil {
+		return err
+	}
+
 	log.Printf("Sending alert to %d for %f,%f", reminder.ChatId, reminder.Location.Latitude, reminder.Location.Longitude)
 	messageText, err := MakePrediction(shared.ParsedPredictionRequest{
 		PredictionType:  predType,
 		Location:        reminder.Location,
 		LocationDetails: reminder.LocationDetails,
-		Offset:          reminder.UTCOffset,
-		Date:            time.Now(),
+		Timezone:        reminder.Timezone,
+		Date:            time.Now().In(loc),
 	})
 	if err != nil {
 		return err
@@ -101,8 +106,16 @@ func enqueueAlerts(rs shared.ReminderStorage, aq shared.AlertQueue, alertType st
 
 func scheduleNextAlerts(region *shared.Region) (bool, error) {
 	var err error
-	now := time.Now().In(time.FixedZone("myzone", int(region.UTCOffset*3600)))
+
+	loc, err := time.LoadLocation(region.Timezone)
+	if err != nil {
+		return false, err
+	}
+
+	now := time.Now().In(loc)
 	madeChanges := false
+	_, offset := time.Now().In(loc).Zone()
+	offsetHours := float64(offset) / 3600.0
 
 	if region.NextSunriseAlert.IsZero() {
 		log.Printf("Scheduling sunrise alerts for %s", region.Region)
@@ -110,7 +123,7 @@ func scheduleNextAlerts(region *shared.Region) (bool, error) {
 		sunriseDay := now
 		for nextSunrise.Before(now) {
 			fmt.Println(nextSunrise, sunriseDay, now)
-			nextSunrise, _, err = sunrisesunset.GetSunriseSunset(region.Location.Latitude, region.Location.Longitude, region.UTCOffset, sunriseDay)
+			nextSunrise, _, err = sunrisesunset.GetSunriseSunset(region.Location.Latitude, region.Location.Longitude, offsetHours, sunriseDay)
 			if err != nil {
 				return false, err
 			}
@@ -127,7 +140,7 @@ func scheduleNextAlerts(region *shared.Region) (bool, error) {
 		sunsetDay := now
 		for nextSunset.Before(now) {
 			fmt.Println(nextSunset, sunsetDay, now)
-			_, nextSunset, err = sunrisesunset.GetSunriseSunset(region.Location.Latitude, region.Location.Longitude, region.UTCOffset, sunsetDay)
+			_, nextSunset, err = sunrisesunset.GetSunriseSunset(region.Location.Latitude, region.Location.Longitude, offsetHours, sunsetDay)
 			if err != nil {
 				return false, err
 			}

@@ -4,12 +4,8 @@ ProvisionedThroughput:
   ReadCapacityUnits: 5
   WriteCapacityUnits: 5
 AttributeDefinitions:
-  - AttributeName: utcOffset
-    AttributeType: N
   - AttributeName: region
     AttributeType: S
 KeySchema:
-  - AttributeName: utcOffset
-    KeyType: HASH
   - AttributeName: region
-    KeyType: RANGE
+    KeyType: HASH

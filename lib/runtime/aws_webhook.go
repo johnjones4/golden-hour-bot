@@ -42,13 +42,7 @@ func AWSWebhookHandler(ctx context.Context, event events.APIGatewayProxyRequest)
 		Client: telegram.Telegram{
 			Token: os.Getenv("TELEGRAM_TOKEN"),
 		},
-		GeoNames: service.GeoNames{
-			Username: os.Getenv("GEONAMES_USERNAME"),
-		},
 		PredictionParser: service.PredictionRequestParser{
-			GeoNames: service.GeoNames{
-				Username: os.Getenv("GEONAMES_USERNAME"),
-			},
 			DateParser: w,
 			Geocoder:   geocoder,
 		},

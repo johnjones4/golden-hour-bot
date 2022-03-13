@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -52,7 +51,7 @@ func (rs *DynamoReminderStorage) SaveReminder(r shared.Reminder) error {
 	}
 
 	c := r.GetRegion()
-	err = rs.upsertIndex(r.GetRegionKey(), c, r.UTCOffset)
+	err = rs.upsertIndex(r.GetRegionKey(), c, r.Timezone)
 	if err != nil {
 		return err
 	}
@@ -124,10 +123,6 @@ func (rs *DynamoReminderStorage) GetRegions() ([]shared.Region, error) {
 
 	}
 
-	sort.Slice(aggregator, func(a, b int) bool {
-		return aggregator[a].UTCOffset > aggregator[b].UTCOffset
-	})
-
 	return aggregator, nil
 }
 
@@ -189,13 +184,10 @@ func (rs *DynamoReminderStorage) UpdateRegion(r shared.Region) error {
 	return nil
 }
 
-func (rs *DynamoReminderStorage) upsertIndex(region string, coord shared.Coordinates, offset float64) error {
+func (rs *DynamoReminderStorage) upsertIndex(region string, coord shared.Coordinates, tz string) error {
 	result, err := rs.Db.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(reminderIndexStorageTable),
 		Key: map[string]*dynamodb.AttributeValue{
-			"utcOffset": {
-				N: aws.String(fmt.Sprint(offset)),
-			},
 			"region": {
 				S: aws.String(region),
 			},
@@ -213,9 +205,9 @@ func (rs *DynamoReminderStorage) upsertIndex(region string, coord shared.Coordin
 	}
 
 	item := shared.Region{
-		Region:    region,
-		UTCOffset: offset,
-		Location:  coord,
+		Region:   region,
+		Location: coord,
+		Timezone: tz,
 	}
 
 	encoded, err := dynamodbattribute.MarshalMap(item)

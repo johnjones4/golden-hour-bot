@@ -9,7 +9,14 @@ import (
 )
 
 func MakePrediction(req shared.ParsedPredictionRequest) (string, error) {
-	sunrise, sunset, err := sunrisesunset.GetSunriseSunset(req.Location.Latitude, req.Location.Longitude, req.Offset, req.Date)
+	loc, err := time.LoadLocation(req.Timezone)
+	if err != nil {
+		return "", err
+	}
+
+	_, offset := time.Now().In(loc).Zone()
+
+	sunrise, sunset, err := sunrisesunset.GetSunriseSunset(req.Location.Latitude, req.Location.Longitude, float64(offset)/3600.0, req.Date)
 	if err != nil {
 		return "", err
 	}
@@ -19,10 +26,10 @@ func MakePrediction(req shared.ParsedPredictionRequest) (string, error) {
 
 	if req.PredictionType == shared.PredictionTypeSunrise {
 		event = "Sunrise"
-		eventTime = sunrise.In(time.FixedZone("local", int(req.Offset*3600)))
+		eventTime = sunrise
 	} else if req.PredictionType == shared.PredictionTypeSunset {
 		event = "Sunset"
-		eventTime = sunset.In(time.FixedZone("local", int(req.Offset*3600)))
+		eventTime = sunset
 	} else {
 		return "", fmt.Errorf("invalid type: %s", req.PredictionType)
 	}

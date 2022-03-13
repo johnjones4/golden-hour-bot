@@ -3,13 +3,13 @@ package service
 import (
 	"time"
 
+	"github.com/bradfitz/latlong"
 	"github.com/codingsince1985/geo-golang"
 	"github.com/johnjones4/golden-hour-bot/lib/shared"
 	"github.com/olebedev/when"
 )
 
 type PredictionRequestParser struct {
-	GeoNames   GeoNames
 	DateParser *when.Parser
 	Geocoder   geo.Geocoder
 }
@@ -22,8 +22,13 @@ func (p *PredictionRequestParser) geocode(desc string) (shared.Coordinates, erro
 	return shared.Coordinates{Latitude: location.Lat, Longitude: location.Lng}, nil
 }
 
-func (p *PredictionRequestParser) parseDate(dateStr string, offset float64) (time.Time, error) {
-	base := time.Now().In(time.FixedZone("myzone", int(offset*3600)))
+func (p *PredictionRequestParser) parseDate(dateStr string, tz string) (time.Time, error) {
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	base := time.Now().In(loc)
 	res, err := p.DateParser.Parse(dateStr, base)
 	if err != nil {
 		return time.Time{}, err
@@ -59,12 +64,9 @@ func (p *PredictionRequestParser) NewParsedPredictionRequest(req shared.Predicti
 		ld.State = address.State
 	}
 
-	offset, err := p.GeoNames.GetUTCOffset(c)
-	if err != nil {
-		return shared.ParsedPredictionRequest{}, err
-	}
+	tz := latlong.LookupZoneName(c.Latitude, c.Longitude)
 
-	date, err := p.parseDate(req.When, offset)
+	date, err := p.parseDate(req.When, tz)
 	if err != nil {
 		return shared.ParsedPredictionRequest{}, err
 	}
@@ -73,7 +75,7 @@ func (p *PredictionRequestParser) NewParsedPredictionRequest(req shared.Predicti
 		PredictionType:  req.PredictionType,
 		Location:        c,
 		LocationDetails: ld,
-		Offset:          offset,
+		Timezone:        tz,
 		Date:            date,
 	}, nil
 }

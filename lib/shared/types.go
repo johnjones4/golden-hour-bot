@@ -28,8 +28,8 @@ type Queue interface {
 }
 
 type Coordinates struct {
-	Longitude float64 `json:"longitude"`
 	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }
 
 type RemindRequest struct {
@@ -47,15 +47,15 @@ type Reminder struct {
 	ChatId          int             `json:"chatId"`
 	Location        Coordinates     `json:"location"`
 	LocationDetails LocationDetails `json:"locationDetails"`
-	UTCOffset       float64         `json:"utcOffset"`
+	Timezone        string          `json:"timezone"`
 }
 
 type Region struct {
-	UTCOffset        float64     `json:"utcOffset"`
 	Region           string      `json:"region"`
 	Location         Coordinates `json:"location"`
 	NextSunriseAlert time.Time   `json:"nextSunriseAlert"`
 	NextSunsetAlert  time.Time   `json:"nextSunsetAlert"`
+	Timezone         string      `json:"timezone"`
 }
 
 type ReminderStorage interface {
@@ -73,6 +73,6 @@ type ParsedPredictionRequest struct {
 	PredictionType  string
 	Location        Coordinates
 	LocationDetails LocationDetails
-	Offset          float64
+	Timezone        string
 	Date            time.Time
 }

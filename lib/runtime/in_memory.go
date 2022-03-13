@@ -35,9 +35,8 @@ func (e *inMemoryStateEngine) SetChatState(id int, state string, info interface{
 }
 
 type inMemoryReminderStorage struct {
-	data     map[string][]shared.Reminder
-	regions  map[string]shared.Region
-	geonames service.GeoNames
+	data    map[string][]shared.Reminder
+	regions map[string]shared.Region
 }
 
 func (rs *inMemoryReminderStorage) SaveReminder(r shared.Reminder) error {
@@ -59,14 +58,9 @@ func (rs *inMemoryReminderStorage) SaveReminder(r shared.Reminder) error {
 
 	if _, ok := rs.regions[r.GetRegionKey()]; !ok {
 		c := r.GetRegion()
-		offset, err := rs.geonames.GetUTCOffset(c)
-		if err != nil {
-			return err
-		}
 		rs.regions[r.GetRegionKey()] = shared.Region{
-			Region:    r.GetRegionKey(),
-			UTCOffset: offset,
-			Location:  c,
+			Region:   r.GetRegionKey(),
+			Location: c,
 		}
 	}
 
@@ -125,13 +119,7 @@ func StartInMemoryRuntime() {
 		Client: telegram.Telegram{
 			Token: os.Getenv("TELEGRAM_TOKEN"),
 		},
-		GeoNames: service.GeoNames{
-			Username: os.Getenv("GEONAMES_USERNAME"),
-		},
 		PredictionParser: service.PredictionRequestParser{
-			GeoNames: service.GeoNames{
-				Username: os.Getenv("GEONAMES_USERNAME"),
-			},
 			DateParser: w,
 			Geocoder:   geocoder,
 		},

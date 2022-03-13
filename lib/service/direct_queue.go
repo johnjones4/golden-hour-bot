@@ -13,7 +13,6 @@ type DirectQueue struct {
 	PredictionParser PredictionRequestParser
 	ReminderStorage  shared.ReminderStorage
 	Geocoder         geo.Geocoder
-	GeoNames         GeoNames
 }
 
 func (mq *DirectQueue) EnqueueBasicMessage(m1 telegram.OutgoingMessage) error {
@@ -67,7 +66,7 @@ func (mq *DirectQueue) EnqueuePrediction(req shared.PredictionRequest) error {
 
 func (mq *DirectQueue) EnqueueReminder(req shared.RemindRequest) error {
 	log.Printf("Creating reminder for %d", req.ChatId)
-	reminder, err := NewReminder(mq.Geocoder, mq.GeoNames, req)
+	reminder, err := NewReminder(mq.Geocoder, req)
 	if err != nil {
 		return wrapErrorWithMessageCatch(mq.Client, req.ChatId, err)
 	}

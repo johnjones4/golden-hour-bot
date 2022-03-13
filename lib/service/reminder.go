@@ -1,11 +1,12 @@
 package service
 
 import (
+	"github.com/bradfitz/latlong"
 	"github.com/codingsince1985/geo-golang"
 	"github.com/johnjones4/golden-hour-bot/lib/shared"
 )
 
-func NewReminder(geocoder geo.Geocoder, geonames GeoNames, req shared.RemindRequest) (shared.Reminder, error) {
+func NewReminder(geocoder geo.Geocoder, req shared.RemindRequest) (shared.Reminder, error) {
 	reminder := shared.Reminder{
 		ChatId: req.ChatId,
 	}
@@ -24,12 +25,6 @@ func NewReminder(geocoder geo.Geocoder, geonames GeoNames, req shared.RemindRequ
 		reminder.Location.Longitude = location.Lng
 	}
 
-	offset, err := geonames.GetUTCOffset(reminder.Location)
-	if err != nil {
-		return shared.Reminder{}, err
-	}
-	reminder.UTCOffset = offset
-
 	address, err := geocoder.ReverseGeocode(reminder.Location.Latitude, reminder.Location.Longitude)
 	if err != nil {
 		return shared.Reminder{}, err
@@ -38,6 +33,8 @@ func NewReminder(geocoder geo.Geocoder, geonames GeoNames, req shared.RemindRequ
 		reminder.LocationDetails.City = address.City
 		reminder.LocationDetails.State = address.State
 	}
+
+	reminder.Timezone = latlong.LookupZoneName(reminder.Location.Latitude, reminder.Location.Longitude)
 
 	return reminder, nil
 }
