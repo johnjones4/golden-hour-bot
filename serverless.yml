@@ -67,7 +67,7 @@ functions:
         - ./bin/aws-alert-queuer
     events:
       - eventBridge:
-          schedule: rate(60 minutes)
+          schedule: rate(30 minutes)
   alertDequeuer:
     handler: bin/aws-alert-dequeuer
     timeout: 30
