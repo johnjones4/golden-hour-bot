@@ -13,3 +13,6 @@ build:
 	cd runtimes/aws-alert-dequeuer && go mod tidy && GOOS=linux go build -ldflags="-s -w" -o ../../bin/aws-alert-dequeuer
 	cd runtimes/aws-alert-queuer && go mod tidy && GOOS=linux go build -ldflags="-s -w" -o ../../bin/aws-alert-queuer
 	cd runtimes/aws-webhook && go mod tidy && GOOS=linux go build -ldflags="-s -w" -o ../../bin/aws-webhook
+
+deploy: build
+	sls deploy --force

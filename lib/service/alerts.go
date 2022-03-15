@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -122,15 +121,15 @@ func scheduleNextAlerts(region *shared.Region) (bool, error) {
 		nextSunrise := now.Add(-time.Hour)
 		sunriseDay := now
 		for nextSunrise.Before(now) {
-			fmt.Println(nextSunrise, sunriseDay, now)
 			nextSunrise, _, err = sunrisesunset.GetSunriseSunset(region.Location.Latitude, region.Location.Longitude, offsetHours, sunriseDay)
 			if err != nil {
 				return false, err
 			}
+			nextSunrise = nextSunrise.Add(-time.Hour)
 			sunriseDay = sunriseDay.Add(time.Hour)
 		}
 		madeChanges = true
-		region.NextSunriseAlert = nextSunrise.Add(-time.Hour).UTC()
+		region.NextSunriseAlert = nextSunrise.UTC()
 		log.Printf("Sunrise alert will go out at %s", region.NextSunriseAlert.String())
 	}
 
@@ -139,15 +138,15 @@ func scheduleNextAlerts(region *shared.Region) (bool, error) {
 		nextSunset := now.Add(-time.Hour)
 		sunsetDay := now
 		for nextSunset.Before(now) {
-			fmt.Println(nextSunset, sunsetDay, now)
 			_, nextSunset, err = sunrisesunset.GetSunriseSunset(region.Location.Latitude, region.Location.Longitude, offsetHours, sunsetDay)
 			if err != nil {
 				return false, err
 			}
+			nextSunset = nextSunset.Add(-time.Hour)
 			sunsetDay = sunsetDay.Add(time.Hour)
 		}
 		madeChanges = true
-		region.NextSunsetAlert = nextSunset.Add(-time.Hour).UTC()
+		region.NextSunsetAlert = nextSunset.UTC()
 		log.Printf("Sunset alert will go out at %s", region.NextSunsetAlert.String())
 	}
 
