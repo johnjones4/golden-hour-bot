@@ -9,6 +9,7 @@ import (
 )
 
 var (
+	commandStart      = "/start"
 	commandGetSunrise = "/" + shared.PredictionTypeSunrise
 	commandGetSunset  = "/" + shared.PredictionTypeSunset
 	commandRemind     = "/remind"
@@ -34,6 +35,13 @@ func (e *Engine) ProcessMessage(message telegram.IncomingMessage) error {
 	case shared.StateIdle:
 		if foundCmd {
 			switch cmd.Command {
+			case commandStart:
+				return e.Queue.EnqueueBasicMessage(telegram.OutgoingMessage{
+					ChatId: message.Chat.Id,
+					Message: telegram.Message{
+						Text: shared.MessageWelcome,
+					},
+				})
 			case commandGetSunrise, commandGetSunset:
 				req := shared.PredictionRequest{
 					PredictionType: cmd.Command[1:],
